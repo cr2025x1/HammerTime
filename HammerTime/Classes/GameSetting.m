@@ -72,13 +72,13 @@
     _buttonGroupCapacity = 4; // 버튼 종류의 최대 개수
     _buttonInitialCount = 2; // 시작 시 주어질 버튼의 종류 개수
     _buttonPositionArray = [NSArray arrayWithObjects:
-                            [NSValue valueWithCGPoint:ccp(50, 50)],
-                            [NSValue valueWithCGPoint:ccp([[CCDirector sharedDirector] viewSize].width - 50,50)],
-                            [NSValue valueWithCGPoint:ccp(50, 150)],
-                            [NSValue valueWithCGPoint:ccp([[CCDirector sharedDirector] viewSize].width - 50,150)],
-                            nil]; // 버튼이 위치할 자리
-    _buttonFrameCount = 3; // 버튼 푸시 애니메이션의 프레임 수
-    _buttonFrameDelay = 0.25; // 블록에서 재생할 애니메이션의 각 프레임 간 시간.
+                            [NSValue valueWithCGPoint:ccp(50, 80)],
+                            [NSValue valueWithCGPoint:ccp([[CCDirector sharedDirector] viewSize].width - 50,80)],
+                            [NSValue valueWithCGPoint:ccp(50, 170)],
+                            [NSValue valueWithCGPoint:ccp([[CCDirector sharedDirector] viewSize].width - 50,170)],
+                            nil]; // 버튼이 위치할 자리 - 수정
+    _buttonFrameCount = 3; // 버튼 푸시 애니메이션의 프레임 수 - 수정
+    _buttonFrameDelay = 0.001; // 블록에서 재생할 애니메이션의 각 프레임 간 시간. - 수정
 
     // 게임 로직 환경변수
     _specBlkEffectCount = 1; // 특수 블록의 이펙트 수
@@ -119,23 +119,23 @@
     _blockTypeRemovalScore[7] = 15; // 색상 6 강화형 (강화->일반 블럭으로 약화시킬 떄 점수)
     _blockTypeRemovalScore[8] = 75; // 특수 블록: 현재는 버튼 뒤섞기 효과밖에 없음.
     _blockTypeRemovalScore[9] = 0; // 타이머 시간 추기 블록
-    _timerComboCount = 10; // 타이머 블록을 주는 콤보 개수
+    _timerComboCount = 20; // 타이머 블록을 주는 콤보 개수
     _timeLimit = 60.0f; // 처음 주어지는 시간 (그리고 타이머의 최대 수치)
-    _timeBonusAmount = 10.0f; // 타임 보너스 때 가산되는 시간
+    _timeBonusAmount = 5.0f; // 타임 보너스 때 가산되는 시간
     _gameOverSceneSwitchingDelay = 3.0f; // 게임 오버 이벤트 발생 시 다음 씬으로 넘어가기 직전의 딜레이 시간.
     _gameStartCountStartDelay = 2.0f; // 게임 시작 카운트가 시작되기 이전의 딜레이 시간.
-    _soundBGM = @""; // 배경음 소리 파일
-    _soundBlockRemove = @""; // 일반 블록이 파괴되는 소리
-    _soundTimerEffect = @""; // 시간 연장 블록이 파괴되는 소리 (=타이머 효과 발동 소리)
-    _soundSpecialEffect = @""; // 버튼 위치 섞기 블록 파괴 소리 (=버튼 위치 섞기 효과 발동 소리)
-    _soundComboFull = @""; // 콤보 블록 생성 소리 (=콤보 게이지가 풀로 채워졌을 때 나는 소리)
-    _soundTimeOver = @""; // 제한 시간이 소진되었을 때 나는 소리 (=게임 오버 시 나는 소리)
-    _soundWrongButton = @""; // 다른 색상의 버튼을 눌렀을 때 나는 소리 (=버튼을 잘못 눌렀을 때 나는 소리, 콤보가 초기화되는 소리)
-    _soundEnhancedBlockCrack = @""; // 강화 블럭이 금가는 소리
-    _soundStartCountTick = @""; // 시작 카운터의 숫자가 줄어들 때 나는 소리 (=맨 마지막 프레임 제외한 프레임의 등장 소리)
-    _soundStartCountComplete = @""; // 시작 카운터가 끝났을 때 나는 소리 (=맨 마지막 프레임 등장 소리)
+    _soundBGM = @"bgm.mp3"; // 배경음 소리 파일
+    _soundBlockRemove = @"Break.mp3"; // 일반 블록이 파괴되는 소리
+    _soundTimerEffect = @"timer.mp3"; // 시간 연장 블록이 파괴되는 소리 (=타이머 효과 발동 소리)
+    _soundSpecialEffect = @"mix.mp3"; // 버튼 위치 섞기 블록 파괴 소리 (=버튼 위치 섞기 효과 발동 소리)
+    _soundComboFull = @"time.wav"; // 콤보 블록 생성 소리 (=콤보 게이지가 풀로 채워졌을 때 나는 소리)
+    _soundTimeOver = @"timeOver.wav"; // 제한 시간이 소진되었을 때 나는 소리 (=게임 오버 시 나는 소리)
+    _soundWrongButton = @"wrong.wav"; // 다른 색상의 버튼을 눌렀을 때 나는 소리 (=버튼을 잘못 눌렀을 때 나는 소리, 콤보가 초기화되는 소리)
+    _soundEnhancedBlockCrack = @"Crack.wav"; // 강화 블럭이 금가는 소리
+    _soundStartCountTick = @"CountProgress.mp3"; // 시작 카운터의 숫자가 줄어들 때 나는 소리 (=맨 마지막 프레임 제외한 프레임의 등장 소리)
+    _soundStartCountComplete = @"CountComplete.mp3"; // 시작 카운터가 끝났을 때 나는 소리 (=맨 마지막 프레임 등장 소리)
     _bgmFadeOutDuration = 1.0f; // 게임 오버시 배경음 페이드아웃 효과 진행시간
-    _streakEffectHitCount = 50; // 콤보 배경을 드러내는 연속 적중수
+    _streakEffectHitCount = 5; // 콤보 배경을 드러내는 연속 적중수
     _streakSoundThresholdCount = 5; // 사운드 재생 연속 적중수 경계점의 개수
     if (_streakSoundThresholdCount > 0) {
         _streakSoundThreholdArray = (unsigned int*)malloc(sizeof(unsigned int)*_streakSoundThresholdCount);
@@ -151,28 +151,28 @@
     // 사운드 재생 연속 적중수 경계점 배열 _streakSoundThreholdArray: 모두 0보다 큰 값을 가져야 하며, 이전 원소보다 항상 값이 커야 한다.
     // 사운드 재생 연속 적중수 경계점 재생 사운드 배열 _streakSoundThreholdEffectArray: 위의 배열에서 지정한 점수를 넘길 때 재생될 소리들
     _streakSoundThreholdArray[0] = 5;
-    _streakSoundThreholdEffectArray[0] = @"";
+    _streakSoundThreholdEffectArray[0] = @"combo1.wav";
     _streakSoundThreholdArray[1] = 10;
-    _streakSoundThreholdEffectArray[1] = @"";
+    _streakSoundThreholdEffectArray[1] = @"combo2.wav";
     _streakSoundThreholdArray[2] = 20;
-    _streakSoundThreholdEffectArray[2] = @"";
+    _streakSoundThreholdEffectArray[2] = @"combo3.wav";
     _streakSoundThreholdArray[3] = 30;
-    _streakSoundThreholdEffectArray[3] = @"";
+    _streakSoundThreholdEffectArray[3] = @"combo4.wav";
     _streakSoundThreholdArray[4] = 40;
-    _streakSoundThreholdEffectArray[4] = @"";
+    _streakSoundThreholdEffectArray[4] = @"combo5.wav";
     
     // UI그룹 환경변수
     _timerBarTextureFile = @"TimerGaugeBar.png"; // 타이머 바 스프라이트 파일
     _timerBGTextureFile = @"TimerGaugeBackground.png"; // 타이머 배경 스프라이트 파일
-    _timerPosition = ccp([[CCDirector sharedDirector] viewSize].width / 2, [[CCDirector sharedDirector] viewSize].height); // 타이머의 화면상 위치
-    _timerAnchorPoint = ccp(0.5f, 1.0f); // 타이머의 앵커포인트
+    _timerPosition = ccp([[CCDirector sharedDirector] viewSize].width / 2, [[CCDirector sharedDirector] viewSize].height / 40.0f); // 타이머의 화면상 위치 - 수정
+    _timerAnchorPoint = ccp(0.5f, 0.5f); // 타이머의 앵커포인트 - 수정
     _timerBarZOrder = timer_bar; // 타이머 바의 화면상 z축 위치
     _timerBGZOrder = timer_background; // 타이머 배경의 화면상 z축 위치
     _comboBarTextureFile = @"ComboGaugeBar.png"; // 콤보 바 스프라이트 파일
     _comboBGTextureFile = @"ComboGaugeBackground.png"; // 콤보 배경 스프라이트 파일
     _comboFHTextureFile = @"ComboGaugeFigurehead.png"; // 콤보 피겨헤드 스프라이트 파일
-    _comboPosition = ccp([[CCDirector sharedDirector] viewSize].width / 2, 0); // 콤보 게이지의 화면상 위치
-    _comboAnchorPoint = ccp(0.5f, 0.0f); // 콤보의 앵커포인트
+    _comboPosition = ccp([[CCDirector sharedDirector] viewSize].width / 4.5f, [[CCDirector sharedDirector] viewSize].height / 1.17f); // 콤보 게이지의 화면상 위치 - 수정
+    _comboAnchorPoint = ccp(0.5f, 0.5f); // 콤보의 앵커포인트
     _comboBarZOrder = combo_bar; // 콤보 바의 화면상 z축 위치
     _comboBGZOrder = combo_background; // 콤보 배경의 화면상 z축 위치
     _comboFHZOrder = combo_figurehead; // 콤보 피겨헤드의 화면상 z축 위치
@@ -180,25 +180,25 @@
     _comboFHScaleSize = 2.0f; // 콤보 피겨헤드의 최대 확대 비율. 주의점! 피겨헤드의 PNG 파일 크기는 반드시 "확대된 상태"를 기준으로 잡아야 한다. 해상도 문제 때문에 그렇게 설정됨.
     _startCountTextureFile = @"StartCountSheet.png"; // 스타트 카운터 스프라이트 파일
     _startCountFrameCount = 4; // 스타트 카운터 프레임의 수
-    _startCountPixelSizeX = 50; // 스타트 카운터 픽셀 크기 X축
-    _startCountPixelSizeY = 50; // 스타트 카운터 픽셀 크기 Y축
+    _startCountPixelSizeX = 250; // 스타트 카운터 픽셀 크기 X축 - 수정
+    _startCountPixelSizeY = 120; // 스타트 카운터 픽셀 크기 Y축 - 수정
     _startCountPosition = ccp([[CCDirector sharedDirector] viewSize].width / 2.0f, [[CCDirector sharedDirector] viewSize].height / 2.0f); // 스타트 카운터의 화면상 위치
     _startCountAnchorPoint = ccp(0.5f, 0.5f); // 스타트 카운터의 앵커포인트
     _startCountZOrder = start_counter; // 스타트 카운터의 화면상 z축 위치
     _startCountJumpHeight = 25.0f; // 스타트 카운터의 점프 높이
     _startCountScaleSize = 2.0f; // 스타트 카운터 확대비율
-    _startCountFadeDuration = 0.4f; // 스타트 카운터의 페이드아웃 시간
+    _startCountFadeDuration = 0.7f; // 스타트 카운터의 페이드아웃 시간 - 수정
     _startCountTimePerFrame = 1.0f; // 스타트 카운트 도중 매 프레임간 소요시간 (맨 마지막 완주 프레임은 _startCountFadeDuration을 사용함)
     _startCountTimeTotal = 3.0f; // 스타트 카운트이 진행되는 동안 기다려 줄 시간
     _isScoreFontSprite = false; // 폰트를 스프라이트로 할지, TTF 폰트로 할지 결정 (여기에 따라 아래의 적용되는 설정값의 항목도 다르다.)
-    _ScoreLabelTTFFontName = @"Verdana-Bold"; // 스코어 라벨의 폰트명 (TTF)
+    _ScoreLabelTTFFontName = @"KoreanPODG-R"; // 스코어 라벨의 폰트명 (TTF) - 수정
     _ScoreLabelTTFFontSize = 32; // 스코어 라벨의 폰트 사이즈 (TTF)
     _ScoreLabelTTFColor = [CCColor whiteColor]; // 스코어 라벨의 폰트 색상 (TTF)
     _ScoreLabelAtlasTextureFile = @""; // 스코어 라벨의 폰트 스프라이트 (Atlas)
     _ScoreLabelAtlasFontSizeX = 0; // 스코어 라벨의 폰트 좌우폭 (Atlas)
     _ScoreLabelAtlasFontSizeY = 0; // 스코어 라벨의 폰트 상하폭 (Atlas)
     _ScoreLabelAnchorPoint = ccp(1.0f, 0.5f); // 스코어 라벨의 앵커포인트 (공통)
-    _ScoreLabelPosition = ccp([[CCDirector sharedDirector] viewSize].width, [[CCDirector sharedDirector] viewSize].height / 2.0f); // 스코어 라벨의 위치 (공통)
+    _ScoreLabelPosition = ccp([[CCDirector sharedDirector] viewSize].width / 1.05, [[CCDirector sharedDirector] viewSize].height / 1.11f); // 스코어 라벨의 위치 (공통) - 수정
     _ScoreLabelZOrder = score_label; // 스코어 라벨의 Z축 위치 (공통)
     _backgroundZOrder = background_zOrder; // 배경 노드의 z축 위치
     _backgroundComboZOrder = background_Combo_ZOrder; // 콤보 배경 노드의 z축 위치
@@ -207,14 +207,14 @@
     _comboFHPositionModifier = -1; // 콤보 피겨헤드의 좌/우측 위치 결정. (-1: 좌측, 1: 우측)
     _backgroundUpperZOrder = background_upper; // 배경 위의 객체가 담긴 노드의 z축 위치
     _isStreakFontSprite = false; // 콤보 폰트를 스프라이트로 할지, TTF 폰트로 할지 결정
-    _streakLabelTTFFontName = @"Verdana-Bold"; // 콤보 라벨의 폰트명 (TTF)
+    _streakLabelTTFFontName = @"KoreanPODG-R"; // 콤보 라벨의 폰트명 (TTF) - 수정
     _streakLabelTTFFontSize = 32; // 콤보 라벨의 폰트 사이즈 (TTF)
     _streakLabelTTFColor = [CCColor whiteColor]; // 콤보 라벨의 폰트 색상 (TTF)
     _streakLabelAtlasTextureFile = @""; // 콤보 라벨의 폰트 스프라이트 (Atlas)
     _streakLabelAtlasFontSizeX = 0; // 콤보 라벨의 폰트 좌우폭
     _streakLabelAtlasFontSizeY = 0; // 콤보 라벨의 폰트 상하폭
     _streakLabelAnchorPoint = ccp(1.0f, 0.5f); // 콤보 라벨의 앵커포인트
-    _streakLabelPosition = ccp([[CCDirector sharedDirector] viewSize].width, [[CCDirector sharedDirector] viewSize].height / 3.0f); // 콤보 라벨의 위치
+    _streakLabelPosition = ccp([[CCDirector sharedDirector] viewSize].width / 2, [[CCDirector sharedDirector] viewSize].height / 1.11f); // 콤보 라벨의 위치 - 수정
     _streakLabelZOrder = combo_label; // 콤보 라벨의 Z축 위치
     _streakLabelJumpHeight = 8.0f; // 콤보 라벨의 점프 높이
     _streakLabelJumpDuration = 0.5f; // 콤보 라벨의 점프 소요 시간

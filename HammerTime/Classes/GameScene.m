@@ -12,13 +12,26 @@
 #import "CCAnimation.h"
 #import "BlockGroup.h"
 #import "ButtonGroup.h"
+#import "GameOver.h"
+
+#define FRONT_CLOUD_SIZE 563
+#define BACK_CLOUD_SIZE  509
+#define FRONT_CLOUD_TOP  550
+#define BACK_CLOUD_TOP   500
 
 // -----------------------------------------------------------------------
 #pragma mark - GameScene
 // -----------------------------------------------------------------------
 
 @implementation GameScene {
+    CCSprite *background;
+    CCSprite *backgroundCombo;
+    CCSprite *bgCloud;
+    CCSprite *comboEffectFire;
+    CCSprite *comboEffectBg;
+    CCSprite *ham;
     
+    CCButton *pauseButton;
 }
 
 // -----------------------------------------------------------------------
@@ -52,6 +65,8 @@
     [self setBackground]; // 일반 배경 객체
     [self setBackgroundCombo]; // 콤보시 뜨는 배경 객체
     [self setBackgroundUI]; // 일반 배경 UI 객체 (메뉴 버튼 등)
+    [self createCloud];
+    [self setBackgroundUpper];
     
 #pragma mark - HelloWorld Defaults End
     
@@ -66,11 +81,65 @@
     [_gameLogic updatedTimeHandler:delta];
 }
 
-
+// GameOver Score 정렬
+- (void)gameOver {
+    NSLog(@"GameOver");
+    
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    [userDefaults setObject:[NSNumber numberWithInt:_gameLogic.userScore] forKey:@"newScoreKey"];
+    [userDefaults synchronize];
+    
+    NSLog(@"Score : %d", [[userDefaults objectForKey:@"newScoreKey"] intValue]);
+    
+    
+    int i;
+    int j;
+    int temp;
+    int least;
+    
+    for (i = 1; i < 49; i++) {
+        least = i;
+        for (j = i + 1; j < 50; j++) {
+            if ([[userDefaults objectForKey:[NSString stringWithFormat:@"score%d",j]] intValue] > [[userDefaults objectForKey:[NSString stringWithFormat:@"score%d",least]] intValue]) {
+                least = j;
+                temp = [[userDefaults objectForKey:[NSString stringWithFormat:@"score%d",i]] intValue];
+                [userDefaults setObject:[NSNumber numberWithInt:[[userDefaults objectForKey:[NSString stringWithFormat:@"score%d",least]] intValue]] forKey:[NSString stringWithFormat:@"score%d",i]];
+                [userDefaults synchronize];
+                [userDefaults setObject:[NSNumber numberWithInt:temp] forKey:[NSString stringWithFormat:@"score%d",least]];
+                [userDefaults synchronize];
+            }
+        }
+    }
+    
+    int newScore;
+    int oldScore;
+    
+    newScore = [[userDefaults objectForKey:@"newScoreKey"] intValue];
+    
+    NSLog(@"%d", newScore);
+    
+        for (int i = 1; i < 50; i++) {
+            if ([[userDefaults objectForKey:[NSString stringWithFormat:@"score%d",i]] intValue] < newScore) {
+                oldScore = [[userDefaults objectForKey:[NSString stringWithFormat:@"score%d",i]] intValue];
+                NSLog(@"oldScore : %d", oldScore);
+    
+                [userDefaults setObject:[NSNumber numberWithInt:newScore] forKey:[NSString stringWithFormat:@"score%d",i]];
+                [userDefaults synchronize];
+        
+                newScore = oldScore;
+            }
+        }
+    
+}
 
 // 프로토콜 지정 메소드: 게임 오버 이벤트 메소드. 역시 필히 있어야 한다.
 - (void)gameOverEventHandler {
     // 게임 오버 시 할 행동을 여기에 기록. (씬 전환, 랭크씬으로의 점수 넘기기 등.)
+    
+    [self gameOver];
+    
+    [[CCDirector sharedDirector] replaceScene:[GameOver scene] withTransition:[CCTransition transitionFadeWithDuration:2.0f]];
+    
     NSLog(@"GameScene gameOverHandler: Gameover event is in effect.\n");
     NSLog(@"Achieved User Score = %d\n", _gameLogic.userScore); // _gameLogic.userScore가 사용자의 점수
 }
@@ -128,6 +197,183 @@
 }
 
 // -----------------------------------------------------------------------
+#pragma mark - Create Cloud
+// -----------------------------------------------------------------------
+
+- (void)createCloud
+{
+    [self createCloudWithSize:FRONT_CLOUD_SIZE top:FRONT_CLOUD_TOP fileName:@"bg-cloud.png" interval:15 z:1];
+    [self createCloudWithSize:BACK_CLOUD_SIZE  top:BACK_CLOUD_TOP  fileName:@"bg-cloud.png"  interval:30 z:1];
+}
+
+- (void)createCloudWithSize:(int)imgSize top:(int)imgTop fileName:(NSString*)fileName interval:(int)interval z:(int)z {
+    id enterRight	= [CCActionMoveTo actionWithDuration:interval position:ccp(0, imgTop)];
+    id enterRight2	= [CCActionMoveTo actionWithDuration:interval position:ccp(0, imgTop)];
+    id exitLeft		= [CCActionMoveTo actionWithDuration:interval position:ccp(-imgSize, imgTop)];
+    id exitLeft2	= [CCActionMoveTo actionWithDuration:interval position:ccp(-imgSize, imgTop)];
+    id reset		= [CCActionMoveTo actionWithDuration:0  position:ccp( imgSize, imgTop)];
+    id reset2		= [CCActionMoveTo actionWithDuration:0  position:ccp( imgSize, imgTop)];
+    id seq1			= [CCActionSequence actions: exitLeft, reset, enterRight, nil];
+    id seq2			= [CCActionSequence actions: enterRight2, exitLeft2, reset2, nil];
+    
+    CCSprite *spCloud1 = [CCSprite spriteWithImageNamed:fileName];
+    [spCloud1 setAnchorPoint:ccp(0,1)];
+    [spCloud1 setPosition:ccp(0, imgTop)];
+    [spCloud1 runAction:[CCActionRepeatForever actionWithAction:seq1]];
+    [self addChild:spCloud1 z:z ];
+    
+    CCSprite *spCloud2 = [CCSprite spriteWithImageNamed:fileName];
+    [spCloud2 setAnchorPoint:ccp(0,1)];
+    [spCloud2 setPosition:ccp(imgSize, imgTop)];
+    [spCloud2 runAction:[CCActionRepeatForever actionWithAction:seq2]];
+    [self addChild:spCloud2 z:z ];
+}
+
+// -----------------------------------------------------------------------
+#pragma mark - Set Node
+// -----------------------------------------------------------------------
+
+- (void)setBackgroundUpper {
+    // 배경 위의 객체들을 총괄하는 노드 (콤보 스프라이트보다 상위 z축에 있어야하는 객체들)
+    CCNode* _backgroundUpperNode = _uiGroup.backgroundUpperNode;
+    
+    _backgroundUpperNode.contentSize = CGSizeMake(self.contentSize.width, self.contentSize.height);
+    _backgroundUpperNode.anchorPoint = ccp(0.5f, 0.5f);
+    _backgroundUpperNode.positionType = CCPositionTypeNormalized;
+    _backgroundUpperNode.position = ccp(0.5f, 0.5f);
+    
+    // 배경 위의 객체 작성 부분
+}
+
+- (void)setBackground {
+    // 배경 객체 총괄 노드
+    CCNode* _backgroundNode = _uiGroup.backgroundNode;
+    
+    _backgroundNode.contentSize = CGSizeMake(self.contentSize.width, self.contentSize.height);
+    _backgroundNode.anchorPoint = ccp(0.5f, 0.5f);
+    _backgroundNode.positionType = CCPositionTypeNormalized;
+    _backgroundNode.position = ccp(0.5f, 0.5f);
+    
+    // 배경 작성 부분
+    // 모든 배경(콤보 효과 배경 제외)은 모두 위의 객체 내에 집어넣어야 한다.
+    background = [CCSprite spriteWithImageNamed:@"bg-game.png"];
+    background.anchorPoint = ccp(0.5f, 0.5f);
+    background.positionType = CCPositionTypeNormalized;
+    background.position = ccp(0.5f, 0.5f);
+    [_backgroundNode addChild:background z:0];
+    
+    ham = [CCSprite spriteWithImageNamed:@"ham01.png"];
+    ham.anchorPoint = ccp(0.5f, 0.5f);
+    ham.positionType = CCPositionTypeNormalized;
+    ham.position = ccp(0.6f, 0.87f);
+    [_backgroundNode addChild:ham];
+    
+    CCAnimation *hamAnimation = [CCAnimation animation];
+    for (NSInteger i = 1; i < 3; i++) {
+        [hamAnimation addSpriteFrameWithFilename:[NSString stringWithFormat:@"ham%02d.png", i]];
+    }
+    [hamAnimation setDelayPerUnit:0.3];
+    
+    CCActionAnimate *hamAnimate = [CCActionAnimate actionWithAnimation:hamAnimation];
+    
+    CCActionRepeatForever *hamRepeatForever = [CCActionRepeatForever actionWithAction:hamAnimate];
+    
+    [ham runAction:hamRepeatForever];
+}
+
+- (void)setBackgroundCombo {
+    // 콤보 배경 효과 객체 총괄 노드
+    CCNode* _backgroundComboNode = _uiGroup.backgroundComboNode;
+    
+    _backgroundComboNode.contentSize = CGSizeMake(self.contentSize.width, self.contentSize.height);
+    _backgroundComboNode.anchorPoint = ccp(0.5f, 0.5f);
+    _backgroundComboNode.positionType = CCPositionTypeNormalized;
+    _backgroundComboNode.position = ccp(0.5f, 0.5f);
+    
+    // 콤보 배경 작성 부분
+    // 콤보 활성화 시 뜨는 모든 배경 코드는 여기에 작성되어야 하며, 모든 객체는 위의 노드에 삽입되어야 한다.
+    
+    comboEffectBg = [CCSprite spriteWithImageNamed:@"effect-combo-game01.png"];
+    comboEffectBg.anchorPoint = ccp(0.5f, 0.5f);
+    comboEffectBg.positionType = CCPositionTypeNormalized;
+    comboEffectBg.position = ccp(0.5f, 0.9f);
+    [_backgroundComboNode addChild:comboEffectBg];
+    
+    CCAnimation *bgAnimation = [CCAnimation animation];
+    for (NSInteger i = 1; i < 3; i++) {
+        [bgAnimation addSpriteFrameWithFilename:[NSString stringWithFormat:@"effect-combo-game%02d.png", i]];
+    }
+    [bgAnimation setDelayPerUnit:0.05];
+    
+    CCActionAnimate *bgAnimate = [CCActionAnimate actionWithAnimation:bgAnimation];
+    
+    CCActionRepeatForever *bgRepeatForever = [CCActionRepeatForever actionWithAction:bgAnimate];
+    
+    [comboEffectBg runAction:bgRepeatForever];
+    
+    backgroundCombo = [CCSprite spriteWithImageNamed:@"bg-combo-game.png"];
+    backgroundCombo.anchorPoint = ccp(0.5f, 0.5f);
+    backgroundCombo.positionType = CCPositionTypeNormalized;
+    backgroundCombo.position = ccp(0.5f, 0.5f);
+    [_backgroundComboNode addChild:backgroundCombo z:0];
+    
+    // 햄 애니메이션
+    ham = [CCSprite spriteWithImageNamed:@"ham01.png"];
+    ham.anchorPoint = ccp(0.5f, 0.5f);
+    ham.positionType = CCPositionTypeNormalized;
+    ham.position = ccp(0.6f, 0.87f);
+    [_backgroundComboNode addChild:ham];
+    
+    CCAnimation *hamAnimation = [CCAnimation animation];
+    for (NSInteger i = 3; i < 6; i++) {
+        [hamAnimation addSpriteFrameWithFilename:[NSString stringWithFormat:@"ham%02d.png", i]];
+    }
+    [hamAnimation setDelayPerUnit:0.1];
+    
+    CCActionAnimate *hamAnimate = [CCActionAnimate actionWithAnimation:hamAnimation];
+    
+    CCActionRepeatForever *hamRepeatForever = [CCActionRepeatForever actionWithAction:hamAnimate];
+    
+    [ham runAction:hamRepeatForever];
+    
+    // comboFire
+    comboEffectFire = [CCSprite spriteWithImageNamed:@"effect2-combo-game01.png"];
+    comboEffectFire.anchorPoint = ccp(0.5f, 0.5f);
+    comboEffectFire.positionType = CCPositionTypeNormalized;
+    comboEffectFire.position = ccp(0.5f, 0.87f);
+    [_backgroundComboNode addChild:comboEffectFire];
+    
+    CCAnimation *fireAnimation = [CCAnimation animation];
+    for (NSInteger i = 1; i < 5; i++) {
+        [fireAnimation addSpriteFrameWithFilename:[NSString stringWithFormat:@"effect2-combo-game%02d.png", i]];
+    }
+    [fireAnimation setDelayPerUnit:0.3];
+    
+    CCActionAnimate *fireAnimate = [CCActionAnimate actionWithAnimation:fireAnimation];
+    
+    CCActionRepeatForever *fireRepeatForever = [CCActionRepeatForever actionWithAction:fireAnimate];
+    
+    [comboEffectFire runAction:fireRepeatForever];
+}
+
+- (void)setBackgroundUI {
+    // 배경 UI 객체 총괄 노드 (UI그룹이 직접 다루지 않는 메뉴 버튼 등등...)
+    CCNode* _backgroundUINode = _uiGroup.backgroundUINode;
+    
+    _backgroundUINode.contentSize = CGSizeMake(self.contentSize.width, self.contentSize.height);
+    _backgroundUINode.anchorPoint = ccp(0.5f, 0.5f);
+    _backgroundUINode.positionType = CCPositionTypeNormalized;
+    _backgroundUINode.position = ccp(0.5f, 0.5f);
+    
+    pauseButton = [CCButton buttonWithTitle:@"" spriteFrame:[CCSpriteFrame frameWithImageNamed:@"pause01.png"] highlightedSpriteFrame:[CCSpriteFrame frameWithImageNamed:@"pause02.png"] disabledSpriteFrame:[CCSpriteFrame frameWithImageNamed:@"pause01.png"]];
+    pauseButton.anchorPoint = ccp(0.5f, 0.5f);
+    pauseButton.positionType = CCPositionTypeNormalized;
+    pauseButton.position = ccp(0.05f, 0.96f);
+    [pauseButton setTarget:self selector:@selector(onBackClicked:)];
+    [_backgroundUINode addChild:pauseButton];
+}
+
+// -----------------------------------------------------------------------
 #pragma mark - Button Callbacks
 // -----------------------------------------------------------------------
 
@@ -135,59 +381,10 @@
 {
     // back to intro scene with transition
     [[CCDirector sharedDirector] replaceScene:[MenuScene scene]
-                               withTransition:[CCTransition transitionFadeWithDuration:1.0f]];
-//    [[CCDirector sharedDirector] replaceScene:[MenuScene scene]
-//                               withTransition:[CCTransition transitionPushWithDirection:CCTransitionDirectionRight duration:1.0f]];
-//    [[CCDirector sharedDirector] replaceScene:[CCTransitionFade transitionWithDuration:1.0f scene:[GamePage scene]]];
-//    [[CCDirector sharedDirector] replaceScene:[CCTransitionFade transitionWithDuration:1.0f scene:[GamePage scene]]];
+                               withTransition:[CCTransition transitionPushWithDirection:CCTransitionDirectionDown duration:0.5f]];
 }
 
 // -----------------------------------------------------------------------
-
-
-- (void)setBackground {
-    // 배경 객체 총괄 노드
-    CCNode* _backgroundNode = _uiGroup.backgroundNode;
-    
-    // 배경 작성 부분
-    // 모든 배경(콤보 효과 배경 제외)은 모두 위의 객체 내에 집어넣어야 한다.
-    // Create a colored background (Dark Grey)
-    CCNodeColor *background = [CCNodeColor nodeWithColor:[CCColor colorWithRed:0.2f green:0.2f blue:0.2f alpha:1.0f]];
-    [_backgroundNode addChild:background];
-}
-
-- (void)setBackgroundUpper {
-    // 배경 위의 객체들을 총괄하는 노드 (콤보 스프라이트보다 상위 z축에 있어야하는 객체들)
-    CCNode* _backgroundUpperNode = _uiGroup.backgroundUpperNode;
-    
-    // 배경 위의 객체 작성 부분
-}
-
-- (void)setBackgroundCombo {
-    // 콤보 배경 효과 객체 총괄 노드
-    CCNode* _backgroundComboNode = _uiGroup.backgroundComboNode;
-    
-    // 콤보 배경 작성 부분
-    // 콤보 활성화 시 뜨는 모든 배경 코드는 여기에 작성되어야 하며, 모든 객체는 위의 노드에 삽입되어야 한다.
-    CCSprite *testSprite = [CCSprite spriteWithImageNamed:@"Icon-72.png"];
-    testSprite.anchorPoint = ccp(0.0f, 0.5f);
-    testSprite.position = ccp(0.0f, self.contentSize.height/2);
-    [_backgroundComboNode addChild:testSprite];
-}
-
-- (void)setBackgroundUI {
-    // 배경 UI 객체 총괄 노드 (UI그룹이 직접 다루지 않는 메뉴 버튼 등등...)
-    CCNode* _backgroundUINode = _uiGroup.backgroundUINode;
-    
-    CCButton *backButton = [CCButton buttonWithTitle:@"[ Menu ]" fontName:@"Verdana-Bold" fontSize:18.0f];
-    backButton.anchorPoint = ccp(0.5f, 0.5f);
-    backButton.position = ccp(self.contentSize.width*0.85, self.contentSize.height*.95);
-    // 단 아래의 좌표 세팅으로는 제대로 출력되지 않음. 좌표 방식의 문제인듯함.
-//    backButton.positionType = CCPositionTypeNormalized;
-//    backButton.position = ccp(0.85f, 0.95f); // Top Right of screen
-    [backButton setTarget:self selector:@selector(onBackClicked:)];
-    [_backgroundUINode addChild:backButton];
-}
 
 @end
 

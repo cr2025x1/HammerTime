@@ -122,11 +122,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "HammerTime/Classes/GameScene.m"
-            timestampString = "424710770.314131"
+            timestampString = "424328089.035625"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "159"
-            endingLineNumber = "159"
+            startingLineNumber = "155"
+            endingLineNumber = "155"
             landmarkName = "-setBackgroundUpper"
             landmarkType = "5">
          </BreakpointContent>
