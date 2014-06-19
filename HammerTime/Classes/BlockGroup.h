@@ -15,7 +15,7 @@
 
 @class Block;
 @class BlockTypeQueue;
-// @class BlockQue;
+@class BlockQue;
 
 
 
@@ -101,21 +101,21 @@
 
 
 
-/*
+
 @interface BlockQue : NSObject {
     unsigned int _writingIndex;
     unsigned int _readingIndex;
-    unsigned int _BlockCount;
+    unsigned int _count;
     unsigned int _capacity;
-    Block __strong** _array; // Hell yeah!
+    Block *__strong* _array; // Hell yeah!
 }
 
+@property (nonatomic, readonly) unsigned int count;
 - (Block*)getBlock;
 - (void)putBlock:(Block*)block;
 - (BlockQue*)initWithCapacity:(unsigned int)capacity;
 
 @end
-*/
 
 
 

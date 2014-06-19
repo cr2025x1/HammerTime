@@ -340,7 +340,7 @@
  */
 #pragma mark - Block
 @implementation Block {
-
+    GameSetting* _gSetSO;
 }
 
 - (Block*)initWithAttachedBatchNode:(CCSpriteBatchNode*)attachedBatchNode
@@ -353,6 +353,8 @@
     // 슈퍼클래스 초기화
     self = [super init];
     if (!self) return(nil);
+    
+    _gSetSO = [GameSetting shared];
     
     // 블록의 세부 설정값 입력
     _attachedBatchNode = attachedBatchNode;
@@ -371,7 +373,7 @@
     _fall = [CCActionFreeFall alloc];
 //    _bounce = [CCActionDistort alloc];
     _sprite = [CCSprite spriteWithTexture:_attachedBatchNode.texture
-                                     rect:CGRectMake(_blockType * [GameSetting shared].blockSizeX, 0, [GameSetting shared].blockSizeX, [GameSetting shared].blockSizeY)];
+                                     rect:CGRectMake(_blockType * _gSetSO.blockSizeX, 0, _gSetSO.blockSizeX, _gSetSO.blockSizeY)];
     
     if (_deathAction == nil || _fall == nil || _sprite == nil) {
 //    if (_bounce == nil || _deathAction == nil || _fall == nil || _sprite == nil) {
@@ -460,8 +462,8 @@
     // 파편을 생성한 블록 객체는 사라질 것이므로, 파편의 해체는 여기서 해서는 안 된다. (?)
     // 만일 파편의 해체를 파편 객체 자체에서 한다면, 설계 철학을 위반하지 않는가?
     // 이동 시 이용할 메소드 : CCActionJumpBy? 아무튼, 내가 직접 새 클래스를 정의하지는 않아도 될 듯하다.
-    for (int i = 0; i < [GameSetting shared].blockFragGenCount; i++) {
-        int fragRand = arc4random() % [GameSetting shared].blockFragTypeCount;
+    for (int i = 0; i < _gSetSO.blockFragGenCount; i++) {
+        int fragRand = arc4random() % _gSetSO.blockFragTypeCount;
         
         CCSprite* fragSprite = [CCSprite spriteWithSpriteFrame:[[[_superObject getBlockFragSFA] objectAtIndex:_blockType] objectAtIndex:fragRand]];
         NSAssert(fragSprite != nil, @"Block createFragments: failed to allocate fragSprite.\n");
@@ -470,15 +472,15 @@
         
 //        float init_velocity = (double)rand() / (double)RAND_MAX * ([GameSetting shared].blockFragVelocityMax - [GameSetting shared].blockFragVelocityMin) + [GameSetting shared].blockFragVelocityMin;
 //        float init_angle = (double)rand() / (double)RAND_MAX * ([GameSetting shared].blockFragAngleMax - [GameSetting shared].blockFragAngleMin) + [GameSetting shared].blockFragAngleMin;
-        float init_velocity = (double)arc4random() / (double)ARC4RANDOM_MAX * ([GameSetting shared].blockFragVelocityMax - [GameSetting shared].blockFragVelocityMin) + [GameSetting shared].blockFragVelocityMin;
-        float init_angle = (double)arc4random() / (double)ARC4RANDOM_MAX * ([GameSetting shared].blockFragAngleMax - [GameSetting shared].blockFragAngleMin) + [GameSetting shared].blockFragAngleMin;
+        float init_velocity = (double)arc4random() / (double)ARC4RANDOM_MAX * (_gSetSO.blockFragVelocityMax - _gSetSO.blockFragVelocityMin) + _gSetSO.blockFragVelocityMin;
+        float init_angle = (double)arc4random() / (double)ARC4RANDOM_MAX * (_gSetSO.blockFragAngleMax - _gSetSO.blockFragAngleMin) + _gSetSO.blockFragAngleMin;
         float cosAngle = cosf(init_angle);
         float sinAngle = sinf(init_angle);
         float init_fallHeight = fragSprite.position.y + fragSprite.contentSize.height/2;
         float init_intermediate = (-1.0f) * init_velocity * sinAngle;
-        float init_determinant = powf(powf(init_velocity * sinAngle, 2) - 2 * [GameSetting shared].blockFragGravAcc * init_fallHeight, 0.5);
-        float init_duration1 = (init_intermediate + init_determinant) / [GameSetting shared].blockFragGravAcc;
-        float init_duration2 = (init_intermediate - init_determinant) / [GameSetting shared].blockFragGravAcc;
+        float init_determinant = powf(powf(init_velocity * sinAngle, 2) - 2 * _gSetSO.blockFragGravAcc * init_fallHeight, 0.5);
+        float init_duration1 = (init_intermediate + init_determinant) / _gSetSO.blockFragGravAcc;
+        float init_duration2 = (init_intermediate - init_determinant) / _gSetSO.blockFragGravAcc;
         float init_duration;
         if (init_duration1 > 0) {
             init_duration = init_duration1;
@@ -490,7 +492,7 @@
         CGPoint destination = ccp(powf(-1, i) * init_velocity * cosAngle *  init_duration, (-1) * init_fallHeight);
         
 //        float init_anglerVelocity = (((double)rand() / (double)RAND_MAX) * ([GameSetting shared].blockFragAnglerVelocityMax - [GameSetting shared].blockFragAnglerVelocityMin) + [GameSetting shared].blockFragAnglerVelocityMin);
-        float init_anglerVelocity = (((double)arc4random() / (double)ARC4RANDOM_MAX) * ([GameSetting shared].blockFragAnglerVelocityMax - [GameSetting shared].blockFragAnglerVelocityMin) + [GameSetting shared].blockFragAnglerVelocityMin);
+        float init_anglerVelocity = (((double)arc4random() / (double)ARC4RANDOM_MAX) * (_gSetSO.blockFragAnglerVelocityMax - _gSetSO.blockFragAnglerVelocityMin) + _gSetSO.blockFragAnglerVelocityMin);
         CCActionRotateBy* rotation_inner = [CCActionRotateBy actionWithDuration:1 angle:180 / M_PI * init_anglerVelocity];
         NSAssert(rotation_inner != nil, @"Block createFragments: failed to allocate rotation_inner.\n");
         CCActionRepeatForever* rotation = [CCActionRepeatForever actionWithAction:rotation_inner];
@@ -500,10 +502,10 @@
 //                                                         position:destination
 //                                                           height:250
 //                                                            jumps:1];
-        NSLog(@"jump height = %lf\n", (-1.0f) * powf(init_velocity * sinAngle, 2) / (2.0f * [GameSetting shared].blockFragGravAcc));
+        NSLog(@"jump height = %lf\n", (-1.0f) * powf(init_velocity * sinAngle, 2) / (2.0f * _gSetSO.blockFragGravAcc));
         CCActionJumpBy* jump = [CCActionJumpBy actionWithDuration:init_duration
                                                          position:destination
-                                                           height:(-1.0f) * powf(init_velocity * sinAngle, 2) / (2.0f * [GameSetting shared].blockFragGravAcc)
+                                                           height:(-1.0f) * powf(init_velocity * sinAngle, 2) / (2.0f * _gSetSO.blockFragGravAcc)
                                                             jumps:1];
 //        CCActionJumpBy* jump = [CCActionJumpBy actionWithDuration:init_duration
 //                                                         position:destination
@@ -544,7 +546,7 @@
     // 스프라이트 시트 구조가 바뀌면 이것도 바뀌어야 할 수 있다.
     [self createFragments];
     _blockType--;
-    [_sprite setTextureRect:CGRectMake(_blockType * [GameSetting shared].blockSizeX, 0, [GameSetting shared].blockSizeX, [GameSetting shared].blockSizeY)];
+    [_sprite setTextureRect:CGRectMake(_blockType * _gSetSO.blockSizeX, 0, _gSetSO.blockSizeX, _gSetSO.blockSizeY)];
 }
 
 
@@ -627,7 +629,7 @@
 
 
 
-/*
+
 // 구현하다 만 블록큐 클래스: 임의접근성까지 추가하자니 NSMutableArray를 그냥 쓰는 게 낫겠다 싶어서 개발을 중단했다. 그러나 추후 시간이 난다면 개발할 수 있다.
 @implementation BlockQue
 
@@ -649,41 +651,41 @@
 }
 
 - (BlockQue*)initWithCapacity:(unsigned int)capacity {
-    _array = (Block __strong**)(malloc(sizeof(Block*)*capacity));
+    _array = (Block *__strong*)(calloc(capacity, sizeof(Block*)));
     if (_array == nil) {
-        NSLog(@"BlockQue object: Failed to malloc.\n");
+        NSLog(@"BlockQue object: Failed to calloc.\n");
         return nil;
     }
     
     _writingIndex = 0;
     _readingIndex = 0;
-    _BlockCount = 0;
+    _count = 0;
     _capacity = capacity;
     
     return self;
 }
 
 - (void)putBlock:(Block*)block {
-    if (_BlockCount >= _capacity) {
+    if (_count >= _capacity) {
         NSAssert(false, @"BlockQue object is overloaded.\n");
     }
     
     _array[_writingIndex] = block;
     _writingIndex = (_writingIndex + 1) % _capacity;
-    _BlockCount++;
+    _count++;
 }
 
 - (Block*)getBlock {
-    if (_BlockCount <= 0) {
+    if (_count <= 0) {
         NSAssert(false, @"BlockQue object is called with getBlock() but it is empty.\n");
     }
     
     Block* loadedBlock = _array[_readingIndex];
+    _array[_readingIndex] = NULL;
     _readingIndex = (_readingIndex + 1) % _capacity;
-    _BlockCount--;
+    _count--;
     
     return loadedBlock;
 }
 
 @end
-*/

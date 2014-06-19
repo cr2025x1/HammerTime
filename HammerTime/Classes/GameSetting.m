@@ -377,6 +377,7 @@
     free(_blockTypeDurabilityArray);
     free(_buttonBlockBindingArray);
     free(_blockTypeRemovalScore);
+    free(_streakSoundThreholdArray);
 }
 
 
