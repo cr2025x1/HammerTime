@@ -16,18 +16,26 @@
 @interface BlockGroup (private)
 - (CCSpriteBatchNode*)getBlockFragSBN;
 - (NSMutableArray*)getBlockFragSFA;
+- (void)stashBlock:(Block*)block;
+@property (readonly) BlockFragQueue* blockFragQueue;
+
 @end
 
 // 블록의 private 메소드들 : 없음. 애당초 블록 객체는 블록그룹 밖에서는 정상적이라면 생성할 일이 전혀 없을 것이다.
 #pragma mark - Block Interface
 @interface Block (private)
+
 - (int)createFragments;
+- (void)reinit;
+
 @end
 
 
 #pragma mark - BlockGroup
 @implementation BlockGroup {
     GameSetting* _gSetSO;
+    BlockQueue* _blockQueue;
+    BlockFragQueue* _blockFragQueue;
 }
 
 + (BlockGroup*)allocWithAttachedScene:(CCScene*)attachedScene {
@@ -66,6 +74,11 @@
     
     _blockTypeQueue = [[BlockTypeQueue alloc] initWithCapacity:_totalCount];
     if (_blockTypeQueue == nil) {
+        return nil;
+    }
+    
+    _blockQueue = [BlockQueue allocWithCapacity:_totalCount];
+    if (_blockQueue == nil) {
         return nil;
     }
     
@@ -175,13 +188,26 @@
             deathAnimationType--;
         }
         
-        Block* block = [[Block alloc]
-                        initWithAttachedBatchNode:_blockSpriteBatchNode
-                        position:ccpAdd(ccp(_baseCGP.x, _baseCGP.y - _gSetSO.blockFallAccDirection * (_gSetSO.blockSizeY * (i + _visibleCount + 0.5) + _gSetSO.blockGap * (float)(i + _visibleCount))), offsetByLastBlockPosition)
-                        type:chosenType
-                        deathAnimation:[_animationArray objectAtIndex:deathAnimationType]
-                        superObject:self
-                        superObjectIndex:i + blockCountOld];
+        Block* block = NULL;
+        if (_blockQueue.count > 0) {
+            block = [_blockQueue getBlock];
+        }
+        else {
+            block = [Block alloc];
+        }
+        block = [block initWithAttachedBatchNode:_blockSpriteBatchNode
+                                        position:ccpAdd(ccp(_baseCGP.x, _baseCGP.y - _gSetSO.blockFallAccDirection * (_gSetSO.blockSizeY * (i + _visibleCount + 0.5) + _gSetSO.blockGap * (float)(i + _visibleCount))), offsetByLastBlockPosition)
+                                            type:chosenType
+                                  deathAnimation:[_animationArray objectAtIndex:deathAnimationType]
+                                     superObject:self
+                                superObjectIndex:i + blockCountOld];
+//        Block* block = [[Block alloc]
+//                        initWithAttachedBatchNode:_blockSpriteBatchNode
+//                        position:ccpAdd(ccp(_baseCGP.x, _baseCGP.y - _gSetSO.blockFallAccDirection * (_gSetSO.blockSizeY * (i + _visibleCount + 0.5) + _gSetSO.blockGap * (float)(i + _visibleCount))), offsetByLastBlockPosition)
+//                        type:chosenType
+//                        deathAnimation:[_animationArray objectAtIndex:deathAnimationType]
+//                        superObject:self
+//                        superObjectIndex:i + blockCountOld];
         if (block == nil)
         {
             NSAssert(false, @"BlockGroup addBlockWithAmount: Block object allocation failed.");
@@ -272,6 +298,7 @@
     NSLog(@"removal count = %d\n", amount);
     for (int i = 0; i < amount; i++) {
         [[_blockArray objectAtIndex:0] playDeathAction];
+//        [_blockQue putBlock:[_blockArray objectAtIndex:0]];
         [_blockArray removeObjectAtIndex:0];
         _blockCount--;
     }
@@ -330,6 +357,10 @@
     [(Block*)([_blockArray objectAtIndex:0]) weakenBlock];
 }
 
+- (void)stashBlock:(Block*)block {
+    [_blockQueue putBlock:block];
+}
+
 @end
 
 
@@ -340,6 +371,15 @@
  */
 #pragma mark - Block
 @implementation Block {
+    CCSprite* _sprite;
+    BlockType _blockType;
+    CCActionFreeFall* _fall;
+    //    CCActionDistort* _bounce;
+    CCActionAnimate* _deathAction;
+    BlockGroup* _superObject;
+    unsigned int _superObjectIndex;
+    CCSpriteBatchNode* _attachedBatchNode;
+    
     GameSetting* _gSetSO;
 }
 
@@ -368,12 +408,25 @@
         // 메소드 설계 철학: 만든 곳에서 제거한다. BlockGroup에서 이 Block을 만들었으니 이 Block의 해체도 BlockGroup에서 이루어지게 한다.
         // 이 주석이 있는 부분에 파편 발생 메소드를 추가할 예정이다. 혹은 디자이너의 결정에 따라 다른 메소드로도 변경 가능.
         [self removeSprite];
+        [_superObject stashBlock:self];
     }],
                      nil];
-    _fall = [CCActionFreeFall alloc];
+    
+    // NULL 확인 조건문 추가: reinit 대응
+    if (_fall == NULL) {
+        _fall = [CCActionFreeFall alloc];
+    }
+    
 //    _bounce = [CCActionDistort alloc];
-    _sprite = [CCSprite spriteWithTexture:_attachedBatchNode.texture
-                                     rect:CGRectMake(_blockType * _gSetSO.blockSizeX, 0, _gSetSO.blockSizeX, _gSetSO.blockSizeY)];
+    
+    // NULL 확인 조건문 추가: reinit 대응
+    if (_sprite == NULL) {
+        _sprite = [CCSprite spriteWithTexture:_attachedBatchNode.texture
+                                         rect:CGRectMake(_blockType * _gSetSO.blockSizeX, 0, _gSetSO.blockSizeX, _gSetSO.blockSizeY)];
+    }
+    else {
+        [_sprite setTextureRect:CGRectMake(_blockType * _gSetSO.blockSizeX, 0, _gSetSO.blockSizeX, _gSetSO.blockSizeY)];
+    }
     
     if (_deathAction == nil || _fall == nil || _sprite == nil) {
 //    if (_bounce == nil || _deathAction == nil || _fall == nil || _sprite == nil) {
@@ -515,6 +568,7 @@
         CCActionSequence* actionSeq = [CCActionSequence actions:jump,
                                        [CCActionCallBlock actionWithBlock:^{
             [[_superObject getBlockFragSBN] removeChild:fragSprite cleanup:true];
+            [_superObject.blockFragQueue putBlockFrag:fragSprite];
         }],
                                        nil];
         NSAssert(actionSeq != nil, @"Block createFragments: failed to allocate actionSeq.\n");
@@ -549,6 +603,9 @@
     [_sprite setTextureRect:CGRectMake(_blockType * _gSetSO.blockSizeX, 0, _gSetSO.blockSizeX, _gSetSO.blockSizeY)];
 }
 
+- (void)reinit {
+    _deathAction = NULL;
+}
 
 @end
 
@@ -629,13 +686,13 @@
 
 
 
+#pragma mark - BlockQueue
+// 블록 객체를 그대로 소멸시키지 않고 재생해 사용하기 위해 저장하는 큐 객체
+@implementation BlockQueue
 
-// 구현하다 만 블록큐 클래스: 임의접근성까지 추가하자니 NSMutableArray를 그냥 쓰는 게 낫겠다 싶어서 개발을 중단했다. 그러나 추후 시간이 난다면 개발할 수 있다.
-@implementation BlockQue
-
-- (BlockQue*)init {
-    if( [self class] == [BlockQue class]) {
-        NSAssert(false, @"You must not use -(id)init method to initialize a BlockQue object. Use initWithCapacity instead.\n");
+- (BlockQueue*)init {
+    if( [self class] == [BlockQueue class]) {
+        NSAssert(false, @"You must not use -(id)init method to initialize a BlockQueue object. Use initWithCapacity instead.\n");
         
         self = nil;
     }
@@ -650,10 +707,14 @@
     free(_array);
 }
 
-- (BlockQue*)initWithCapacity:(unsigned int)capacity {
++ (BlockQueue*)allocWithCapacity:(unsigned int)capacity {
+    return [[BlockQueue alloc] initWithCapacity:capacity];
+}
+
+- (BlockQueue*)initWithCapacity:(unsigned int)capacity {
     _array = (Block *__strong*)(calloc(capacity, sizeof(Block*)));
     if (_array == nil) {
-        NSLog(@"BlockQue object: Failed to calloc.\n");
+        NSLog(@"BlockQueue object: Failed to calloc.\n");
         return nil;
     }
     
@@ -661,31 +722,104 @@
     _readingIndex = 0;
     _count = 0;
     _capacity = capacity;
+    NSLog(@"BlockQueue initlaized with capacity of %d.\n", _capacity);
     
     return self;
 }
 
 - (void)putBlock:(Block*)block {
     if (_count >= _capacity) {
-        NSAssert(false, @"BlockQue object is overloaded.\n");
+        NSAssert(false, @"BlockQueue object is overloaded.\n");
     }
     
     _array[_writingIndex] = block;
+    [_array[_writingIndex] reinit];
     _writingIndex = (_writingIndex + 1) % _capacity;
     _count++;
+    NSLog(@"Stashing a Block object. Count = %d\n", _count);
 }
 
 - (Block*)getBlock {
     if (_count <= 0) {
-        NSAssert(false, @"BlockQue object is called with getBlock() but it is empty.\n");
+        NSAssert(false, @"BlockQueue object is called with getBlock() but it is empty.\n");
     }
     
     Block* loadedBlock = _array[_readingIndex];
     _array[_readingIndex] = NULL;
     _readingIndex = (_readingIndex + 1) % _capacity;
     _count--;
+    NSLog(@"Withdrawing a Block object. Count = %d\n", _count);
     
     return loadedBlock;
+}
+
+@end
+
+
+#pragma mark - BlockFragQueue
+// 블록 객체를 그대로 소멸시키지 않고 재생해 사용하기 위해 저장하는 큐 객체
+@implementation BlockFragQueue
+
+- (BlockFragQueue*)init {
+    if( [self class] == [BlockFragQueue class]) {
+        NSAssert(false, @"You must not use -(id)init method to initialize a BlockFragQueue object. Use initWithCapacity instead.\n");
+        
+        self = nil;
+    }
+    else {
+        self = [super init];
+    }
+    
+    return self;
+}
+
+- (void)dealloc {
+    free(_array);
+}
+
++ (BlockFragQueue*)allocWithCapacity:(unsigned int)capacity {
+    return [[BlockFragQueue alloc] initWithCapacity:capacity];
+}
+
+- (BlockFragQueue*)initWithCapacity:(unsigned int)capacity {
+    _array = (CCSprite *__strong*)(calloc(capacity, sizeof(CCSprite*)));
+    if (_array == nil) {
+        NSLog(@"BlockFragQueue object: Failed to calloc.\n");
+        return nil;
+    }
+    
+    _writingIndex = 0;
+    _readingIndex = 0;
+    _count = 0;
+    _capacity = capacity;
+    NSLog(@"BlockFragQueue initlaized with capacity of %d.\n", _capacity);
+    
+    return self;
+}
+
+- (void)putBlockFrag:(CCSprite*)blockFrag {
+    if (_count >= _capacity) {
+        NSAssert(false, @"BlockFragQueue object is overloaded.\n");
+    }
+    
+    _array[_writingIndex] = blockFrag;
+    _writingIndex = (_writingIndex + 1) % _capacity;
+    _count++;
+    NSLog(@"Stashing a CCSprite object. Count = %d\n", _count);
+}
+
+- (CCSprite*)getBlockFrag {
+    if (_count <= 0) {
+        NSAssert(false, @"BlockFragQueue object is called with getBlockFrag() but it is empty.\n");
+    }
+    
+    CCSprite* loadedBlockFrag = _array[_readingIndex];
+    _array[_readingIndex] = NULL;
+    _readingIndex = (_readingIndex + 1) % _capacity;
+    _count--;
+    NSLog(@"Withdrawing a CCSprite object. Count = %d\n", _count);
+    
+    return loadedBlockFrag;
 }
 
 @end

@@ -15,7 +15,7 @@
 
 @class Block;
 @class BlockTypeQueue;
-@class BlockQue;
+@class BlockQueue;
 
 
 
@@ -69,14 +69,6 @@
  - 이 클래스의 객체는 모두 블록 관리 클래스 내에서만 캡슐화되어 존재해야 한다.
 */
 @interface Block : NSObject {
-    CCSprite* _sprite;
-    BlockType _blockType;
-    CCActionFreeFall* _fall;
-//    CCActionDistort* _bounce;
-    CCActionAnimate* _deathAction;
-    BlockGroup* _superObject;
-    unsigned int _superObjectIndex;
-    CCSpriteBatchNode* _attachedBatchNode;
 }
 
 @property (nonatomic, readonly) BlockType blockType;
@@ -102,7 +94,7 @@
 
 
 
-@interface BlockQue : NSObject {
+@interface BlockQueue : NSObject {
     unsigned int _writingIndex;
     unsigned int _readingIndex;
     unsigned int _count;
@@ -113,7 +105,8 @@
 @property (nonatomic, readonly) unsigned int count;
 - (Block*)getBlock;
 - (void)putBlock:(Block*)block;
-- (BlockQue*)initWithCapacity:(unsigned int)capacity;
+- (BlockQueue*)initWithCapacity:(unsigned int)capacity;
++ (BlockQueue*)allocWithCapacity:(unsigned int)capacity;
 
 @end
 
@@ -131,6 +124,24 @@ BlockType* _array; // Hell yeah!
 - (BlockType)getBlockType;
 - (void)putBlockType:(BlockType)blockType;
 - (BlockTypeQueue*)initWithCapacity:(unsigned int)capacity;
+
+@end
+
+
+
+@interface BlockFragQueue : NSObject {
+    unsigned int _writingIndex;
+    unsigned int _readingIndex;
+    unsigned int _count;
+    unsigned int _capacity;
+    CCSprite *__strong* _array; // Hell yeah!
+}
+
+@property (nonatomic, readonly) unsigned int count;
+- (CCSprite*)getBlockFrag;
+- (void)putBlockFrag:(CCSprite*)blockFrag;
+- (BlockFragQueue*)initWithCapacity:(unsigned int)capacity;
++ (BlockFragQueue*)allocWithCapacity:(unsigned int)capacity;
 
 @end
 
